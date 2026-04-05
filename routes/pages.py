@@ -29,3 +29,8 @@ def live_monitor():
 @pages.route('/forecast')
 def forecast_page():
     return render_template('forecast.html')
+
+
+@pages.route('/coral-analysis')
+def coral_analysis():
+    return render_template('coral_analysis.html')

@@ -40,14 +40,14 @@
             <span class="nav-link-text ms-1">Historical Insights</span>
           </a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link" href="/litters">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
               <svg width="12px" height="12px" viewBox="0 0 45 40" xmlns="http://www.w3.org/2000/svg"><title>litter</title><rect x="8" y="18" width="6" height="12" fill="#000000"/><rect x="20" y="14" width="6" height="16" fill="#000000"/><rect x="32" y="10" width="6" height="20" fill="#000000"/></svg>
             </div>
             <span class="nav-link-text ms-1">Litters Information</span>
           </a>
-        </li>
+        </li> -->
         <li class="nav-item">
           <a class="nav-link" href="/simek">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -70,6 +70,21 @@
               <svg width="12px" height="12px" viewBox="0 0 45 40" xmlns="http://www.w3.org/2000/svg"><title>forecast</title><polyline points="5,30 15,20 25,25 35,15 45,20" fill="none" stroke="#000000" stroke-width="2"/></svg>
             </div>
             <span class="nav-link-text ms-1">Forecast & Prediction</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/coral-analysis">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <svg width="12px" height="12px" viewBox="0 0 45 40" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="22" cy="28" rx="10" ry="7" fill="none" stroke="#000" stroke-width="2"/>
+                <line x1="22" y1="21" x2="22" y2="10" stroke="#000" stroke-width="2"/>
+                <line x1="22" y1="10" x2="15" y2="4"  stroke="#000" stroke-width="2"/>
+                <line x1="22" y1="10" x2="29" y2="4"  stroke="#000" stroke-width="2"/>
+                <line x1="18" y1="14" x2="12" y2="10" stroke="#000" stroke-width="2"/>
+                <line x1="26" y1="14" x2="32" y2="10" stroke="#000" stroke-width="2"/>
+              </svg>
+            </div>
+            <span class="nav-link-text ms-1">Coral Analysis</span>
           </a>
         </li>
       </ul>
@@ -134,11 +149,15 @@
               <h6>Temperature Forecast</h6>
               <p class="text-sm mb-0">
                 <i class="fa fa-thermometer-three-quarters text-warning"></i>
-                <span class="font-weight-bold ms-1">Historical Surface Temperature Analysis (1800-1940)</span>
+                <span class="font-weight-bold ms-1">Historical Surface Temperature Analysis</span>
               </p>
             </div>
             <div class="card-body p-3">
-              <div class="chart">
+              <div class="chart" style="position: relative;">
+                <div id="tempLoader" class="chart-loader" style="display: none;">
+                  <div class="spinner"></div>
+                  <p class="loader-text">Loading Temperature Data...</p>
+                </div>
                 <canvas id="tempForecastChart" class="chart-canvas" height="300"></canvas>
               </div>
             </div>
@@ -152,11 +171,15 @@
               <h6>Oxygen Level Forecast</h6>
               <p class="text-sm mb-0">
                 <i class="fa fa-wind text-info"></i>
-                <span class="font-weight-bold ms-1">Historical Dissolved Oxygen Analysis (1800-1940)</span>
+                <span class="font-weight-bold ms-1">Historical Dissolved Oxygen Analysis</span>
               </p>
             </div>
             <div class="card-body p-3">
-              <div class="chart">
+              <div class="chart" style="position: relative;">
+                <div id="oxyLoader" class="chart-loader" style="display: none;">
+                  <div class="spinner"></div>
+                  <p class="loader-text">Loading Oxygen Data...</p>
+                </div>
                 <canvas id="oxyForecastChart" class="chart-canvas" height="300"></canvas>
               </div>
             </div>
@@ -174,7 +197,11 @@
               </p>
             </div>
             <div class="card-body p-3">
-              <div class="chart">
+              <div class="chart" style="position: relative;">
+                <div id="rsiLoader" class="chart-loader" style="display: none;">
+                  <div class="spinner"></div>
+                  <p class="loader-text">Loading RSI Data...</p>
+                </div>
                 <canvas id="rsiForecastChart" class="chart-canvas" height="300"></canvas>
               </div>
             </div>
@@ -452,27 +479,62 @@
       });
     }
 
+    function showLoaders() {
+      document.getElementById('tempLoader').style.display = 'block';
+      document.getElementById('oxyLoader').style.display = 'block';
+      document.getElementById('rsiLoader').style.display = 'block';
+    }
+
+    function hideLoaders() {
+      document.getElementById('tempLoader').style.display = 'none';
+      document.getElementById('oxyLoader').style.display = 'none';
+      document.getElementById('rsiLoader').style.display = 'none';
+    }
+
     async function updateForecasts() {
       const region = document.getElementById('region').value;
       const forecastYears = parseInt(document.getElementById('forecastPeriod').value);
 
       console.log(`Updating forecasts for region: ${region}, forecast years: ${forecastYears}`);
+      
+      showLoaders();
 
       try {
         // Fetch historical data and generate forecasts (including RSI forecast)
+        console.log('Fetching data from APIs...');
         const [trendsResponse, rsiHistResponse, rsiForecastResponse] = await Promise.all([
           fetch(`/api/trends?region=${region}`),
           fetch(`/api/reef_stress?region=${region}`),
           fetch(`/api/forecast/rsi?region=${region}&forecast_years=${forecastYears}`)
         ]);
 
+        // Check response status codes
+        if (!trendsResponse.ok) throw new Error(`Trends API error: ${trendsResponse.status}`);
+        if (!rsiHistResponse.ok) throw new Error(`Reef Stress API error: ${rsiHistResponse.status}`);
+        if (!rsiForecastResponse.ok) throw new Error(`RSI Forecast API error: ${rsiForecastResponse.status}`);
+
         const trendsData = await trendsResponse.json();
-        const rsiHist = await rsiHistResponse.json();
-        const rsiFc = await rsiForecastResponse.json();
+        const rsiHistFull = await rsiHistResponse.json();
+        const rsiFcFull = await rsiForecastResponse.json();
         
         console.log('Trends data received:', trendsData);
-        console.log('RSI historical data received:', rsiHist);
-        console.log('RSI forecast data received:', rsiFc);
+        console.log('RSI full data received:', rsiHistFull);
+        console.log('RSI forecast full data received:', rsiFcFull);
+        
+        // Extract historical RSI data from the response
+        const rsiHist = rsiHistFull.hasOwnProperty('historical') ? rsiHistFull.historical : rsiHistFull;
+        const rsiFc = rsiFcFull.hasOwnProperty('forecast') ? rsiFcFull.forecast : rsiFcFull;
+        
+        // Validate data
+        if (!trendsData.temp_data || trendsData.temp_data.length === 0) {
+          throw new Error('No temperature data received');
+        }
+        if (!rsiHist.RSI || rsiHist.RSI.length === 0) {
+          throw new Error('No RSI historical data received');
+        }
+        if (!rsiFc.RSI || rsiFc.RSI.length === 0) {
+          throw new Error('No RSI forecast data received');
+        }
 
         // Update temperature forecast
         const tempData = trendsData.temp_data;
@@ -490,44 +552,49 @@
         tempChart.data.datasets[0].data = historicalData;
         tempChart.data.datasets[1].data = forecastData;
         console.log(`Temperature chart updated: ${tempLabels.length} historical points, ${forecastYears} forecast points`);
-        tempChart.update('none'); // Update without animation for smoother transition
+        tempChart.update('none');
 
-  // Update oxygen forecast (create continuous forecast that connects to last historical point)
-  const oxyData = trendsData.oxy_data;
-  const oxyLabels = trendsData.labels2;
-  const oxyForecast = generateForecast(oxyData, forecastYears);
-  const oxyLast = oxyData[oxyData.length - 1];
-  const oxyHistData = [...oxyData, ...Array(forecastYears).fill(null)];
-  const oxyFcData = Array(oxyData.length - 1).fill(null).concat([oxyLast, ...oxyForecast]);
+        // Update oxygen forecast
+        const oxyData = trendsData.oxy_data;
+        const oxyLabels = trendsData.labels2;
+        const oxyForecast = generateForecast(oxyData, forecastYears);
+        const oxyLast = oxyData[oxyData.length - 1];
+        const oxyHistData = [...oxyData, ...Array(forecastYears).fill(null)];
+        const oxyFcData = Array(oxyData.length - 1).fill(null).concat([oxyLast, ...oxyForecast]);
 
-  oxyChart.data.labels = [...oxyLabels, ...futureYears];
-  oxyChart.data.datasets[0].data = oxyHistData;
-  oxyChart.data.datasets[1].data = oxyFcData;
-  console.log(`Oxygen chart updated: ${oxyLabels.length} historical points, ${forecastYears} forecast points`);
-  oxyChart.update('none');
+        oxyChart.data.labels = [...oxyLabels, ...futureYears];
+        oxyChart.data.datasets[0].data = oxyHistData;
+        oxyChart.data.datasets[1].data = oxyFcData;
+        console.log(`Oxygen chart updated: ${oxyLabels.length} historical points, ${forecastYears} forecast points`);
+        oxyChart.update('none');
 
-  // Update RSI forecast: use backend forecast and connect smoothly to historical RSI
-  const rsiValues = rsiHist.RSI;
-  const rsiLabels = rsiHist.years;
-  const rsiFuture = rsiFc.forecast.RSI || rsiFc.forecast.RSI; // fallback
-  const rsiTsiHist = rsiHist.TSI;
-  const rsiOsiHist = rsiHist.OSI;
-  const rsiLast = rsiValues[rsiValues.length - 1];
-  const rsiFutureYears = generateFutureYears(rsiLabels[rsiLabels.length - 1], forecastYears);
+        // Update RSI forecast: use backend forecast and connect smoothly to historical RSI
+        const rsiValues = rsiHist.RSI;
+        const rsiLabels = rsiHist.years;
+        const rsiFuture = rsiFc.RSI || [];
+        const rsiTsiHist = rsiHist.TSI || [];
+        const rsiOsiHist = rsiHist.OSI || [];
+        const rsiLast = rsiValues[rsiValues.length - 1];
+        const rsiFutureYears = generateFutureYears(rsiLabels[rsiLabels.length - 1], forecastYears);
 
-  const rsiHistData = [...rsiValues, ...Array(forecastYears).fill(null)];
-  const rsiFcData = Array(rsiValues.length - 1).fill(null).concat([rsiLast, ...rsiFuture]);
+        const rsiHistData = [...rsiValues, ...Array(forecastYears).fill(null)];
+        const rsiFcData = Array(rsiValues.length - 1).fill(null).concat([rsiLast, ...rsiFuture]);
 
-  rsiChart.data.labels = [...rsiLabels, ...rsiFutureYears];
-  rsiChart.data.datasets[0].data = rsiHistData;
-  rsiChart.data.datasets[1].data = rsiFcData;
-  rsiChart.data.datasets[2].data = [...rsiTsiHist, ...Array(forecastYears).fill(null)];
-  rsiChart.data.datasets[3].data = [...rsiOsiHist, ...Array(forecastYears).fill(null)];
-  console.log(`RSI chart updated: ${rsiLabels.length} historical points, ${forecastYears} forecast points`);
-  rsiChart.update('none');
+        rsiChart.data.labels = [...rsiLabels, ...rsiFutureYears];
+        rsiChart.data.datasets[0].data = rsiHistData;
+        rsiChart.data.datasets[1].data = rsiFcData;
+        rsiChart.data.datasets[2].data = [...rsiTsiHist, ...Array(forecastYears).fill(null)];
+        rsiChart.data.datasets[3].data = [...rsiOsiHist, ...Array(forecastYears).fill(null)];
+        console.log(`RSI chart updated: ${rsiLabels.length} historical points, ${forecastYears} forecast points`);
+        rsiChart.update('none');
+        
+        hideLoaders();
 
       } catch (error) {
-        console.error('Error updating forecasts:', error);
+        console.error('Error updating forecasts:', error.message);
+        console.error('Full error:', error);
+        hideLoaders();
+        alert('Error loading forecast data: ' + error.message);
       }
     }
 
@@ -562,6 +629,7 @@
 
     // Initialize charts on load
     document.addEventListener("DOMContentLoaded", function() {
+      showLoaders();
       initCharts();
       updateForecasts();
     });
@@ -586,6 +654,49 @@
   </div>
 
   <style>
+    /* Loading spinner animation */
+    .chart-loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 8px;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #3A416F;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loader-text {
+      font-size: 14px;
+      color: #3A416F;
+      font-weight: 500;
+      margin: 0;
+      opacity: 0.8;
+    }
+
     @keyframes pulse {
       0%, 100% {
         transform: scale(1);

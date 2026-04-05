@@ -117,7 +117,7 @@
             <span class="nav-link-text ms-1">Historical Insights</span>
           </a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link" href="/litters">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
               <svg width="12px" height="12px" viewBox="0 0 45 40" xmlns="http://www.w3.org/2000/svg">
@@ -129,7 +129,7 @@
             </div>
             <span class="nav-link-text ms-1">Litters Information</span>
           </a>
-        </li>
+        </li> -->
         <li class="nav-item">
           <a class="nav-link" href="/simek">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -159,6 +159,21 @@
               </svg>
             </div>
             <span class="nav-link-text ms-1">Forecast & Prediction</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/coral-analysis">
+            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+              <svg width="12px" height="12px" viewBox="0 0 45 40" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="22" cy="28" rx="10" ry="7" fill="none" stroke="#000" stroke-width="2"/>
+                <line x1="22" y1="21" x2="22" y2="10" stroke="#000" stroke-width="2"/>
+                <line x1="22" y1="10" x2="15" y2="4"  stroke="#000" stroke-width="2"/>
+                <line x1="22" y1="10" x2="29" y2="4"  stroke="#000" stroke-width="2"/>
+                <line x1="18" y1="14" x2="12" y2="10" stroke="#000" stroke-width="2"/>
+                <line x1="26" y1="14" x2="32" y2="10" stroke="#000" stroke-width="2"/>
+              </svg>
+            </div>
+            <span class="nav-link-text ms-1">Coral Analysis</span>
           </a>
         </li>
       </ul>
@@ -322,8 +337,105 @@
                   <div id="live-chart" style="height: 300px;"></div>
                 </div>
               </div>
+
+              <!-- 3D Reef Visualization -->
             </div>
           </div>
+          <!-- Rover Underwater Mapping -->
+          <div class="card mt-2">
+            <div class="card-header pb-0 px-3 pt-2">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <h6 class="mb-0" style="font-size:0.85rem;">
+                    <span id="rover-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#adb5bd;margin-right:5px;transition:background 0.3s;"></span>
+                    Rover Underwater Mapping
+                  </h6>
+                  <p class="text-xs text-muted mb-0">LiDAR point cloud · live sensor telemetry · bathythermograph</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span id="depth-badge" class="badge bg-gradient-dark text-white" style="font-size:0.68rem;font-family:monospace;">0.0 m depth</span>
+                  <span id="pts-badge" class="badge bg-gradient-secondary text-white" style="font-size:0.68rem;font-family:monospace;">0 pts</span>
+                  <button class="btn btn-sm bg-gradient-success text-white py-1 px-2" style="font-size:0.7rem;" id="btn-descend" onclick="roverDescend()"><i class="fas fa-arrow-down me-1"></i>Descend</button>
+                  <button class="btn btn-sm bg-gradient-warning text-white py-1 px-2" style="font-size:0.7rem;" id="btn-pause" onclick="roverPause()" disabled><i class="fas fa-pause me-1"></i>Pause</button>
+                  <button class="btn btn-sm bg-gradient-danger text-white py-1 px-2" style="font-size:0.7rem;" id="btn-surface" onclick="roverSurface()" disabled><i class="fas fa-arrow-up me-1"></i>Surface</button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-2">
+              <div class="row g-2">
+                <!-- LiDAR 3D view -->
+                <div class="col-lg-8">
+                  <div id="rover-3d" style="width:100%;height:420px;background:#000d1a;border-radius:0.75rem;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:8px;left:10px;z-index:10;font-family:monospace;font-size:0.62rem;color:rgba(0,255,136,0.75);pointer-events:none;">
+                      <div>LiDAR · 360° sweep</div>
+                      <div id="lidar-pts">Points: 0</div>
+                    </div>
+                    <div style="position:absolute;top:8px;right:10px;z-index:10;font-family:monospace;font-size:0.62rem;color:rgba(0,180,255,0.75);pointer-events:none;" id="rover-xyz">X:0.0 Y:0.0 Z:0.0</div>
+                    <div style="position:absolute;bottom:8px;left:10px;z-index:10;font-family:monospace;font-size:0.6rem;color:rgba(255,255,255,0.3);pointer-events:none;">Left drag to orbit · Middle drag to pan · Scroll to zoom</div>
+                  </div>
+                </div>
+                <!-- Sensor panel -->
+                <div class="col-lg-4 d-flex flex-column gap-2">
+                  <!-- Depth gauge -->
+                  <div style="background:#000d1a;border:1px solid #002244;border-radius:0.5rem;padding:10px 12px;">
+                    <div style="font-size:0.6rem;letter-spacing:0.06em;color:rgba(0,200,255,0.7);margin-bottom:8px;">DEPTH PROFILE</div>
+                    <div style="display:flex;align-items:flex-end;gap:10px;">
+                      <div style="position:relative;width:20px;background:rgba(0,30,60,0.8);border-radius:4px;height:110px;overflow:hidden;flex-shrink:0;">
+                        <div id="depth-fill" style="position:absolute;bottom:0;width:100%;background:#00ff88;border-radius:4px;height:0%;transition:height 0.4s;"></div>
+                      </div>
+                      <div>
+                        <div id="depth-num" style="font-size:1.9rem;font-weight:700;color:#00ff88;line-height:1;font-family:monospace;">0.0</div>
+                        <div style="color:rgba(255,255,255,0.4);font-size:0.65rem;">metres</div>
+                        <div style="color:rgba(255,255,255,0.3);font-size:0.62rem;margin-top:3px;" id="speed-status">Speed: 0.0 m/s</div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Telemetry -->
+                  <div style="background:#000d1a;border:1px solid #002244;border-radius:0.5rem;padding:10px 12px;flex:1;">
+                    <div style="font-size:0.6rem;letter-spacing:0.06em;color:rgba(0,200,255,0.7);margin-bottom:8px;">LIVE TELEMETRY</div>
+                    <div class="tel-row" style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                      <span style="font-size:0.68rem;color:rgba(255,255,255,0.45);">Temperature</span>
+                      <span id="tel-temp" style="font-size:0.72rem;font-weight:600;color:#fb6340;font-family:monospace;">--°C</span>
+                    </div>
+                    <div class="tel-row" style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                      <span style="font-size:0.68rem;color:rgba(255,255,255,0.45);">Salinity</span>
+                      <span id="tel-sal" style="font-size:0.72rem;font-weight:600;color:#5e72e4;font-family:monospace;">-- PSU</span>
+                    </div>
+                    <div class="tel-row" style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                      <span style="font-size:0.68rem;color:rgba(255,255,255,0.45);">Pressure</span>
+                      <span id="tel-pres" style="font-size:0.72rem;font-weight:600;color:#2dce89;font-family:monospace;">-- bar</span>
+                    </div>
+                    <div class="tel-row" style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                      <span style="font-size:0.68rem;color:rgba(255,255,255,0.45);">Dissolved O&#8322;</span>
+                      <span id="tel-oxy" style="font-size:0.72rem;font-weight:600;color:#11cdef;font-family:monospace;">-- mg/L</span>
+                    </div>
+                    <div class="tel-row" style="display:flex;justify-content:space-between;padding:4px 0;">
+                      <span style="font-size:0.68rem;color:rgba(255,255,255,0.45);">Turbidity</span>
+                      <span id="tel-turb" style="font-size:0.72rem;font-weight:600;color:#f4f5f7;font-family:monospace;">-- NTU</span>
+                    </div>
+                  </div>
+                  <!-- Dive log -->
+                  <div style="background:#000d1a;border:1px solid #002244;border-radius:0.5rem;padding:8px 12px;max-height:90px;overflow-y:auto;">
+                    <div style="font-size:0.6rem;letter-spacing:0.06em;color:rgba(0,200,255,0.7);margin-bottom:6px;">DIVE LOG</div>
+                    <div id="dive-log" style="font-family:monospace;font-size:0.6rem;color:rgba(0,255,136,0.6);line-height:1.6;"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Profile charts -->
+              <div class="row g-2 mt-1">
+                <div class="col-md-6">
+                  <div style="font-size:0.62rem;letter-spacing:0.05em;color:#8898aa;margin-bottom:4px;">BATHYTHERMOGRAPH · Temp vs Depth</div>
+                  <div id="bathy-chart" style="height:180px;background:#000d1a;border-radius:0.5rem;"></div>
+                </div>
+                <div class="col-md-6">
+                  <div style="font-size:0.62rem;letter-spacing:0.05em;color:#8898aa;margin-bottom:4px;">SALINITY PROFILE · PSU vs Depth</div>
+                  <div id="sal-chart" style="height:180px;background:#000d1a;border-radius:0.5rem;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- End Rover Mapping -->
+
         </div>
       </div>
     </div>
@@ -335,8 +447,370 @@
   <script src="../static/assets/js/plugins/perfect-scrollbar.min.js"></script>
   <script src="../static/assets/js/soft-ui-dashboard.min.js?v=1.1.0"></script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
 
   <script>
+    // ── ROVER MAPPING SYSTEM ──────────────────────────────────────────
+    var roverScene, roverCamera, roverRenderer, roverControls;
+    var roverMesh, lidarCone, roverLight;
+    var pointCloud, pointPositions, pointColors;
+    var MAX_PTS = 100000;
+    var ptCount = 0;
+    var lidarAngle = 0;
+    var roverDepth = 0;
+    var MAX_DEPTH = 300;
+    var descentSpeed = 0.8;
+    var isDescending = false;
+    var lastTick = Date.now();
+    var lastSensorTick = 0;
+    var bathyData = { depths: [], temps: [] };
+    var salData   = { depths: [], sals: [] };
+    var batInitialized = false, salInitialized = false;
+
+    function initRover() {
+      var c = document.getElementById('rover-3d');
+      if (!c) return;
+      var W = c.clientWidth, H = c.clientHeight;
+
+      roverScene = new THREE.Scene();
+      roverScene.background = new THREE.Color(0x000d1a);
+      roverScene.fog = new THREE.FogExp2(0x000d1a, 0.003);
+
+      roverCamera = new THREE.PerspectiveCamera(58, W / H, 0.1, 2000);
+      roverCamera.position.set(90, 30, 90);
+      roverCamera.lookAt(0, -20, 0);
+
+      roverRenderer = new THREE.WebGLRenderer({ antialias: true });
+      roverRenderer.setSize(W, H);
+      roverRenderer.setPixelRatio(window.devicePixelRatio || 1);
+      c.appendChild(roverRenderer.domElement);
+
+      roverControls = new THREE.OrbitControls(roverCamera, roverRenderer.domElement);
+      roverControls.enableDamping = true;
+      roverControls.dampingFactor = 0.06;
+      roverControls.enablePan = true;
+      roverControls.enableZoom = true;
+      roverControls.enableRotate = true;
+      roverControls.panSpeed = 0.5;
+      roverControls.rotateSpeed = 1.0;
+      roverControls.zoomSpeed = 1.2;
+      roverControls.target.set(0, -20, 0);
+
+      // Lighting
+      roverScene.add(new THREE.AmbientLight(0x001833, 1.5));
+      var dirLight = new THREE.DirectionalLight(0x0044aa, 0.5);
+      dirLight.position.set(0, 1, 0);
+      roverScene.add(dirLight);
+
+      // Point cloud
+      var geo = new THREE.BufferGeometry();
+      pointPositions = new Float32Array(MAX_PTS * 3);
+      pointColors    = new Float32Array(MAX_PTS * 3);
+      geo.setAttribute('position', new THREE.BufferAttribute(pointPositions, 3));
+      geo.setAttribute('color',    new THREE.BufferAttribute(pointColors,    3));
+      geo.setDrawRange(0, 0);
+      var mat = new THREE.PointsMaterial({ size: 0.35, vertexColors: true, sizeAttenuation: true });
+      pointCloud = new THREE.Points(geo, mat);
+      roverScene.add(pointCloud);
+
+      // Seafloor grid
+      var grid = new THREE.GridHelper(400, 80, 0x003344, 0x001a2a);
+      grid.position.y = -200;
+      roverScene.add(grid);
+
+      // Water particles
+      var pGeo = new THREE.BufferGeometry();
+      var pPos = new Float32Array(3000 * 3);
+      for (var i = 0; i < 3000; i++) {
+        pPos[i*3]   = (Math.random() - 0.5) * 300;
+        pPos[i*3+1] = Math.random() * -400;
+        pPos[i*3+2] = (Math.random() - 0.5) * 300;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      roverScene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0x0a2a44, size: 0.25, sizeAttenuation: true })));
+
+      // Rover
+      roverMesh = buildRoverMesh();
+      roverScene.add(roverMesh);
+
+      // Rover light
+      roverLight = new THREE.PointLight(0x00ccff, 4, 80);
+      roverMesh.add(roverLight);
+
+      window.addEventListener('resize', function() {
+        var ww = c.clientWidth, wh = c.clientHeight;
+        roverRenderer.setSize(ww, wh);
+        roverCamera.aspect = ww / wh;
+        roverCamera.updateProjectionMatrix();
+      });
+
+      addDiveLog('System ready. Press Descend to begin mission.');
+      updateRoverDot('standby');
+      animateRover();
+    }
+
+    function buildRoverMesh() {
+      var g = new THREE.Group();
+      var metalMat  = new THREE.MeshStandardMaterial({ color: 0x778899, metalness: 0.8, roughness: 0.3 });
+      var darkMat   = new THREE.MeshStandardMaterial({ color: 0x334455, metalness: 0.9, roughness: 0.2 });
+      var lidarMat  = new THREE.MeshStandardMaterial({ color: 0x00ff88, transparent: true, opacity: 0.6, emissive: 0x00ff44, emissiveIntensity: 0.3 });
+
+      // Body
+      g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(7, 2.5, 11), metalMat)));
+      // Top dome (LiDAR)
+      var dome = new THREE.Mesh(new THREE.SphereGeometry(1.3, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), lidarMat);
+      dome.position.y = 1.25;
+      g.add(dome);
+      // Thrusters
+      var thrGeo = new THREE.CylinderGeometry(0.55, 0.75, 2.2, 8);
+      [[-3, 0, -4.5], [3, 0, -4.5], [-3, 0, 4.5], [3, 0, 4.5]].forEach(function(p) {
+        var t = new THREE.Mesh(thrGeo, darkMat);
+        t.position.set(p[0], p[1], p[2]);
+        t.rotation.x = Math.PI / 2;
+        g.add(t);
+      });
+      // Camera arm
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 4), metalMat);
+      arm.position.set(0, -0.5, -7);
+      g.add(arm);
+      // LiDAR sweep cone (visual only)
+      lidarCone = new THREE.Mesh(
+        new THREE.ConeGeometry(28, 38, 28, 1, true),
+        new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: true, transparent: true, opacity: 0.06 })
+      );
+      lidarCone.rotation.x = Math.PI;
+      lidarCone.position.y = -19;
+      g.add(lidarCone);
+      return g;
+    }
+
+    function seafloorY(x, z) {
+      return -190
+        + Math.sin(x * 0.038) * 22
+        + Math.cos(z * 0.055) * 16
+        + Math.sin(x * 0.11  + z * 0.08) * 9
+        + Math.cos(x * 0.20  - z * 0.15) * 5
+        + (Math.random() - 0.5) * 1.5;
+    }
+
+    function sweepLiDAR(rx, ry, rz) {
+      var rays = 45;
+      for (var i = 0; i < rays; i++) {
+        if (ptCount >= MAX_PTS) break;
+        var ang   = lidarAngle + (i / rays) * Math.PI * 2;
+        var range = 12 + Math.random() * 32;
+        var tx    = rx + range * Math.cos(ang);
+        var tz    = rz + range * Math.sin(ang);
+        var sf    = seafloorY(tx, tz);
+        var ty    = Math.max(sf, ry - range * 0.95);
+
+        var idx = ptCount * 3;
+        pointPositions[idx]   = tx + (Math.random() - 0.5) * 0.4;
+        pointPositions[idx+1] = ty + (Math.random() - 0.5) * 0.25;
+        pointPositions[idx+2] = tz + (Math.random() - 0.5) * 0.4;
+
+        // Color: cyan (surface) → green (mid) → amber (deep/seafloor)
+        var d = Math.min(1, Math.max(0, -ty / 200));
+        if (d < 0.5) {
+          pointColors[idx]   = 0;
+          pointColors[idx+1] = 0.6 + d * 0.4;
+          pointColors[idx+2] = 1 - d * 1.2;
+        } else {
+          pointColors[idx]   = (d - 0.5) * 1.6;
+          pointColors[idx+1] = 0.8 - (d - 0.5) * 0.8;
+          pointColors[idx+2] = 0;
+        }
+        ptCount++;
+      }
+      lidarAngle += 0.12;
+      var geo = pointCloud.geometry;
+      geo.setDrawRange(0, ptCount);
+      geo.attributes.position.needsUpdate = true;
+      geo.attributes.color.needsUpdate    = true;
+    }
+
+    function sensorAt(d) {
+      var temp = d < 30
+        ? 28 - d * 0.07
+        : d < 200
+          ? 26 - ((d - 30) / 170) * 17
+          : 9  - ((d - 200) / 100) * 5;
+      temp += (Math.random() - 0.5) * 0.25;
+      var sal  = 34.0 + (d / 1000) * 2.2 + (Math.random() - 0.5) * 0.1;
+      var pres = 1 + d / 10;
+      var oxy  = Math.max(2, 8.5 - (d / 200) * 3.5 + (Math.random() - 0.5) * 0.3);
+      var turb = Math.max(0.1, 1.5 - (d / 200) + (Math.random() - 0.5) * 0.4);
+      return { temp: temp.toFixed(2), sal: sal.toFixed(2), pres: pres.toFixed(2), oxy: oxy.toFixed(2), turb: turb.toFixed(2) };
+    }
+
+    function updateTelemetry(d) {
+      var s = sensorAt(d);
+      document.getElementById('tel-temp').textContent = s.temp + '°C';
+      document.getElementById('tel-sal').textContent  = s.sal  + ' PSU';
+      document.getElementById('tel-pres').textContent = s.pres + ' bar';
+      document.getElementById('tel-oxy').textContent  = s.oxy  + ' mg/L';
+      document.getElementById('tel-turb').textContent = s.turb + ' NTU';
+      // Bathythermograph data
+      bathyData.depths.push(d); bathyData.temps.push(parseFloat(s.temp));
+      salData.depths.push(d);   salData.sals.push(parseFloat(s.sal));
+      updateProfileCharts();
+    }
+
+    function updateProfileCharts() {
+      var depths = bathyData.depths.map(function(v) { return -v; });
+      if (!batInitialized) {
+        Plotly.newPlot('bathy-chart',
+          [{ x: bathyData.temps, y: depths, mode: 'lines', line: { color: '#fb6340', width: 2 }, name: 'Temp' }],
+          { paper_bgcolor:'#000d1a', plot_bgcolor:'#000d1a',
+            margin: { t:10, b:30, l:45, r:10 },
+            xaxis: { title:'°C', color:'#aaa', gridcolor:'#111' },
+            yaxis: { title:'Depth (m)', color:'#aaa', gridcolor:'#111', autorange: true },
+            font: { color:'#aaa', size:10 }, showlegend: false },
+          { responsive: true, displayModeBar: false }
+        );
+        batInitialized = true;
+      } else {
+        Plotly.extendTraces('bathy-chart', { x: [bathyData.temps.slice(-1)], y: [depths.slice(-1)] }, [0]);
+      }
+      var sDepths = salData.depths.map(function(v) { return -v; });
+      if (!salInitialized) {
+        Plotly.newPlot('sal-chart',
+          [{ x: salData.sals, y: sDepths, mode: 'lines', line: { color: '#5e72e4', width: 2 }, name: 'Salinity' }],
+          { paper_bgcolor:'#000d1a', plot_bgcolor:'#000d1a',
+            margin: { t:10, b:30, l:45, r:10 },
+            xaxis: { title:'PSU', color:'#aaa', gridcolor:'#111' },
+            yaxis: { title:'Depth (m)', color:'#aaa', gridcolor:'#111', autorange: true },
+            font: { color:'#aaa', size:10 }, showlegend: false },
+          { responsive: true, displayModeBar: false }
+        );
+        salInitialized = true;
+      } else {
+        Plotly.extendTraces('sal-chart', { x: [salData.sals.slice(-1)], y: [sDepths.slice(-1)] }, [0]);
+      }
+    }
+
+    function animateRover() {
+      requestAnimationFrame(animateRover);
+      var now = Date.now();
+      var dt  = Math.min((now - lastTick) / 1000, 0.05);
+      lastTick = now;
+
+      if (isDescending && roverDepth < MAX_DEPTH) {
+        roverDepth += descentSpeed * dt;
+        roverDepth = Math.min(roverDepth, MAX_DEPTH);
+
+        roverMesh.position.y = -roverDepth;
+
+        // Camera follows rover loosely
+        var target = new THREE.Vector3(0, -roverDepth, 0);
+        roverControls.target.lerp(target, 0.015);
+
+        // LiDAR sweep every frame
+        sweepLiDAR(roverMesh.position.x, roverMesh.position.y, roverMesh.position.z);
+
+        // UI updates
+        var pct = Math.min(100, (roverDepth / MAX_DEPTH) * 100);
+        document.getElementById('depth-num').textContent   = roverDepth.toFixed(1);
+        document.getElementById('depth-fill').style.height = pct + '%';
+        document.getElementById('depth-badge').textContent = roverDepth.toFixed(1) + ' m depth';
+        document.getElementById('pts-badge').textContent   = ptCount.toLocaleString() + ' pts';
+        document.getElementById('lidar-pts').textContent   = 'Points: ' + ptCount.toLocaleString();
+        document.getElementById('rover-xyz').textContent   =
+          'X:' + roverMesh.position.x.toFixed(1) + ' Y:' + (-roverDepth).toFixed(1) + ' Z:' + roverMesh.position.z.toFixed(1);
+        document.getElementById('speed-status').textContent = 'Speed: ' + descentSpeed.toFixed(1) + ' m/s';
+
+        // Telemetry now comes from WebSocket rover_update events, not local simulation
+        // if (now - lastSensorTick > 3000) {
+        //   updateTelemetry(roverDepth);
+        //   lastSensorTick = now;
+        // }
+
+        if (roverDepth >= MAX_DEPTH) {
+          isDescending = false;
+          addDiveLog('MAX DEPTH ' + MAX_DEPTH + 'm reached. Holding position.');
+          updateRoverDot('standby');
+          document.getElementById('btn-descend').disabled = true;
+          document.getElementById('btn-pause').disabled   = true;
+          document.getElementById('btn-surface').disabled = false;
+        }
+      }
+
+      if (lidarCone) lidarCone.rotation.y += 0.04;
+      roverControls.update();
+      roverRenderer.render(roverScene, roverCamera);
+    }
+
+    function roverDescend() {
+      isDescending = true;
+      updateRoverDot('active');
+      addDiveLog('Descent initiated at ' + descentSpeed.toFixed(1) + ' m/s');
+      // updateTelemetry(roverDepth);  // Disabled: telemetry now comes from WebSocket
+      lastSensorTick = Date.now();
+      document.getElementById('btn-descend').disabled = true;
+      document.getElementById('btn-pause').disabled   = false;
+      document.getElementById('btn-surface').disabled = false;
+    }
+    function roverPause() {
+      isDescending = !isDescending;
+      var btn = document.getElementById('btn-pause');
+      if (isDescending) {
+        updateRoverDot('active');
+        btn.innerHTML = '<i class="fas fa-pause me-1"></i>Pause';
+        addDiveLog('Descent resumed at ' + roverDepth.toFixed(1) + 'm');
+      } else {
+        updateRoverDot('standby');
+        btn.innerHTML = '<i class="fas fa-play me-1"></i>Resume';
+        addDiveLog('Hovering at ' + roverDepth.toFixed(1) + 'm');
+      }
+    }
+    function roverSurface() {
+      isDescending = false;
+      roverDepth = 0;
+      ptCount    = 0;
+      lidarAngle = 0;
+      bathyData  = { depths: [], temps: [] };
+      salData    = { depths: [], sals: [] };
+      batInitialized = false; salInitialized = false;
+      roverMesh.position.y = 0;
+      pointCloud.geometry.setDrawRange(0, 0);
+      pointCloud.geometry.attributes.position.needsUpdate = true;
+      document.getElementById('depth-num').textContent    = '0.0';
+      document.getElementById('depth-fill').style.height  = '0%';
+      document.getElementById('depth-badge').textContent  = '0.0 m depth';
+      document.getElementById('pts-badge').textContent    = '0 pts';
+      document.getElementById('btn-descend').disabled     = false;
+      document.getElementById('btn-pause').disabled       = true;
+      document.getElementById('btn-surface').disabled     = true;
+      document.getElementById('btn-pause').innerHTML      = '<i class="fas fa-pause me-1"></i>Pause';
+      updateRoverDot('standby');
+      addDiveLog('Surfaced. Point cloud cleared. Ready for new dive.');
+      if (document.getElementById('bathy-chart')._fullLayout) Plotly.purge('bathy-chart');
+      if (document.getElementById('sal-chart')._fullLayout)   Plotly.purge('sal-chart');
+    }
+    function updateRoverDot(state) {
+      var dot = document.getElementById('rover-dot');
+      dot.style.background = state === 'active' ? '#2dce89' : state === 'standby' ? '#fb6340' : '#adb5bd';
+    }
+    function addDiveLog(msg) {
+      var log = document.getElementById('dive-log');
+      var t   = new Date().toTimeString().slice(0, 8);
+      log.innerHTML += '[' + t + '] ' + msg + '<br>';
+      var card = log.parentElement.parentElement;
+      card.scrollTop = card.scrollHeight;
+    }
+
+    // Init rover scene after DOM + scripts loaded
+    window.addEventListener('load', function() {
+      initRover();
+      // Show control buttons by default (no rover connected yet)
+      document.getElementById('btn-descend').style.display = 'inline-block';
+      document.getElementById('btn-pause').style.display = 'inline-block';
+      document.getElementById('btn-surface').style.display = 'inline-block';
+    });
+    // ── END ROVER SYSTEM ─────────────────────────────────────────────
+
     let compartmentCounter = 0;
     let draggedElement = null;
     let activeSensors = new Set();
@@ -529,10 +1003,10 @@
     }
 
     // Live data simulation
-    let timeData = [];
-    let tempData = [];
-    let salData = [];
-    let oxyData = [];
+    let liveTimeData = [];
+    let liveTempData = [];
+    let liveSalData = [];
+    let liveOxyData = [];
 
     function updateLiveData() {
       const now = new Date();
@@ -543,27 +1017,27 @@
       // Only update data for active sensors
       if (activeSensors.has('temp-sensor')) {
         document.getElementById('live-temp').textContent = temp + '°C';
-        tempData.push(parseFloat(temp));
+        liveTempData.push(parseFloat(temp));
       }
       if (activeSensors.has('sal-sensor')) {
         document.getElementById('live-sal').textContent = sal + ' PSU';
-        salData.push(parseFloat(sal));
+        liveSalData.push(parseFloat(sal));
       }
       if (activeSensors.has('oxy-sensor')) {
         document.getElementById('live-oxy').textContent = oxy + ' mg/L';
-        oxyData.push(parseFloat(oxy));
+        liveOxyData.push(parseFloat(oxy));
       }
       
       // Update chart data only if we have active sensors
       if (activeSensors.size > 0) {
-        timeData.push(now);
+        liveTimeData.push(now);
         
         // Keep only last 20 points
-        if (timeData.length > 20) {
-          timeData.shift();
-          if (tempData.length > 20) tempData.shift();
-          if (salData.length > 20) salData.shift();
-          if (oxyData.length > 20) oxyData.shift();
+        if (liveTimeData.length > 20) {
+          liveTimeData.shift();
+          if (liveTempData.length > 20) liveTempData.shift();
+          if (liveSalData.length > 20) liveSalData.shift();
+          if (liveOxyData.length > 20) liveOxyData.shift();
         }
         
         updateChart();
@@ -578,10 +1052,10 @@
       
       const traces = [];
       
-      if (activeSensors.has('temp-sensor') && tempData.length > 0) {
+      if (activeSensors.has('temp-sensor') && liveTempData.length > 0) {
         traces.push({
-          x: timeData.slice(-tempData.length),
-          y: tempData,
+          x: liveTimeData.slice(-liveTempData.length),
+          y: liveTempData,
           name: 'Temperature (°C)',
           type: 'scatter',
           mode: 'lines+markers',
@@ -589,10 +1063,10 @@
         });
       }
       
-      if (activeSensors.has('sal-sensor') && salData.length > 0) {
+      if (activeSensors.has('sal-sensor') && liveSalData.length > 0) {
         traces.push({
-          x: timeData.slice(-salData.length),
-          y: salData,
+          x: liveTimeData.slice(-liveSalData.length),
+          y: liveSalData,
           name: 'Salinity (PSU)',
           type: 'scatter',
           mode: 'lines+markers',
@@ -601,10 +1075,10 @@
         });
       }
       
-      if (activeSensors.has('oxy-sensor') && oxyData.length > 0) {
+      if (activeSensors.has('oxy-sensor') && liveOxyData.length > 0) {
         traces.push({
-          x: timeData.slice(-oxyData.length),
-          y: oxyData,
+          x: liveTimeData.slice(-liveOxyData.length),
+          y: liveOxyData,
           name: 'Oxygen (mg/L)',
           type: 'scatter',
           mode: 'lines+markers',
@@ -666,7 +1140,121 @@
     // Start live data updates
     setInterval(updateLiveData, 2000);
     updateLiveData();
+
+    // ── WEBSOCKET CONNECTION ──────────────────────────────────────────
+    // Listen for rover telemetry from the server
+    if (typeof io === 'undefined') {
+      console.error('[Frontend] Socket.io library not loaded!');
+      addDiveLog('ERROR: Socket.io library failed to load');
+    } else {
+      console.log('[Frontend] Socket.io loaded, connecting...');
+      const socket = io();
+      
+      console.log('[Frontend] Socket object created:', socket);
+
+      socket.on('connect', function() {
+        console.log('[Frontend] Connected to server, socket id:', socket.id);
+        socket.emit('join_dashboard');
+        console.log('[Frontend] Sent join_dashboard event');
+        addDiveLog('WebSocket connected');
+      });
+
+      socket.on('rover_status', function(data) {
+        console.log('[Frontend] Rover status:', data);
+        const dot = document.getElementById('rover-dot');
+        dot.style.background = data.connected ? '#2dce89' : '#adb5bd';
+        
+        const statusText = data.connected ? `${data.rover_id} connected (${data.mode} mode)` : 'No rover connected';
+        addDiveLog(statusText);
+        
+        // Hide manual controls when real rover is connected, show when disconnected
+        document.getElementById('btn-descend').style.display = data.connected ? 'none' : 'inline-block';
+        document.getElementById('btn-pause').style.display = data.connected ? 'none' : 'inline-block';
+        document.getElementById('btn-surface').style.display = data.connected ? 'none' : 'inline-block';
+      });
+
+      socket.on('rover_update', function(data) {
+        console.log('[Frontend] Rover telemetry received:', data);
+      
+      // Update telemetry displays
+      document.getElementById('tel-temp').textContent = (data.temp_c !== undefined ? parseFloat(data.temp_c).toFixed(2) : '--') + '°C';
+      document.getElementById('tel-sal').textContent = (data.sal_psu !== undefined ? parseFloat(data.sal_psu).toFixed(2) : '--') + ' PSU';
+      document.getElementById('tel-pres').textContent = (data.pres_bar !== undefined ? parseFloat(data.pres_bar).toFixed(2) : '--') + ' bar';
+      document.getElementById('tel-oxy').textContent = (data.oxy_mgl !== undefined ? parseFloat(data.oxy_mgl).toFixed(2) : '--') + ' mg/L';
+      document.getElementById('tel-turb').textContent = (data.turb_ntu !== undefined ? parseFloat(data.turb_ntu).toFixed(2) : '--') + ' NTU';
+      
+      // Update depth
+      if (data.depth_m !== undefined) {
+        roverDepth = data.depth_m;
+        document.getElementById('depth-num').textContent = roverDepth.toFixed(1);
+        const pct = Math.min(100, (roverDepth / MAX_DEPTH) * 100);
+        document.getElementById('depth-fill').style.height = pct + '%';
+        document.getElementById('depth-badge').textContent = roverDepth.toFixed(1) + ' m depth';
+      }
+      
+      // Update bathythermograph and salinity profile data
+      if (data.depth_m !== undefined && data.temp_c !== undefined) {
+        bathyData.depths.push(data.depth_m);
+        bathyData.temps.push(parseFloat(data.temp_c));
+        updateProfileCharts();
+      }
+      if (data.depth_m !== undefined && data.sal_psu !== undefined) {
+        salData.depths.push(data.depth_m);
+        salData.sals.push(parseFloat(data.sal_psu));
+        updateProfileCharts();
+      }
+      
+      // Add LIDAR points if present
+      if (data.lidar && Array.isArray(data.lidar)) {
+        console.log(`[Frontend] Received ${data.lidar.length} LIDAR points at depth ${roverDepth}m`);
+        if (data.lidar.length > 0) {
+          console.log(`[Frontend] First point: x=${data.lidar[0].x}, y=${data.lidar[0].y}, z=${data.lidar[0].z}`);
+        }
+        
+        data.lidar.forEach((point, idx) => {
+          if (ptCount >= MAX_PTS) return;
+          const pidx = ptCount * 3;
+          pointPositions[pidx] = point.x || 0;
+          pointPositions[pidx+1] = point.y || 0;
+          pointPositions[pidx+2] = point.z || 0;
+          
+          // Color by depth: cyan (shallow) → green (mid) → amber (deep)
+          const depth_pct = Math.min(1, Math.max(0, -point.y / 200));
+          if (depth_pct < 0.5) {
+            pointColors[pidx] = 0;
+            pointColors[pidx+1] = 0.6 + depth_pct;
+            pointColors[pidx+2] = 1 - depth_pct * 1.2;
+          } else {
+            pointColors[pidx] = (depth_pct - 0.5) * 1.6;
+            pointColors[pidx+1] = 0.8 - (depth_pct - 0.5) * 0.8;
+            pointColors[pidx+2] = 0;
+          }
+          ptCount++;
+        });
+        
+        console.log(`[Frontend] Total points now: ${ptCount}`);
+        pointCloud.geometry.setDrawRange(0, ptCount);
+        pointCloud.geometry.attributes.position.needsUpdate = true;
+        pointCloud.geometry.attributes.color.needsUpdate = true;
+        document.getElementById('pts-badge').textContent = ptCount.toLocaleString() + ' pts';
+      }
+    });
+
+    socket.on('disconnect', function() {
+      console.log('[Frontend] Disconnected from server');
+      addDiveLog('WebSocket disconnected');
+      console.error('[Frontend] Connection error:', error);
+      addDiveLog('ERROR: WebSocket connection error - ' + error);
+    });
+
+    socket.on('error', function(error) {
+      console.error('[Frontend] Socket error:', error);
+      addDiveLog('ERROR: Socket error - ' + error);
+    });
+    }
   </script>
+
+
 
   <!-- Floating Simek Chatbot Button -->
   <a href="/simek" id="simek-float-btn" style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: transparent; box-shadow: 0 4px 20px rgba(121, 40, 202, 0.4); display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 1000; transition: all 0.3s ease; animation: pulse 2s infinite;">
